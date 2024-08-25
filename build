@@ -1,1 +1,5 @@
 gcc pmw3389.c -O3 -o pmw3389 -lpigpio
+
+#get around pigpio's need for running as root
+sudo chown root:root pmw3389
+sudo chmod 4755 pmw3389

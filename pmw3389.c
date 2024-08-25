@@ -267,10 +267,11 @@ void ReadMotion()
 #endif
 
 void intHandler(int) {
-  shutdown=true;
+	printf("action handler\n");
+      	shutdown=true;
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 
   if(pmw_spiOpen(spiDevice)!= 0)
@@ -288,13 +289,26 @@ int main()
     printf("Read[%x] = %x\n", regToRead[i], x);
   }
 
-  outputFp = fopen("/home/nick/accel_data/temp.csv", "w");
+  if(argc > 1)
+  {
+	printf("writing to file: %s\n", argv[1]);
+	outputFp = fopen(argv[1], "w");
+  }
+  else
+  {
+	  printf("Using default output file\n");
+  	outputFp = fopen("/home/nick/accel_data/temp.csv", "w");
+  }
   if(outputFp == NULL)
   {
 	  printf("Failed to open output file\n");
 	  return -1;
   }
 
+  struct sigaction sigact;
+  sigact.sa_handler = intHandler;
+  sigaction(SIGINT, &sigact, NULL);
+  sigaction(SIGTERM, &sigact, NULL);
 
   uint8_t regTest = 0x10;
   printf("Read[%x] = %x\n", regTest, readReg(regTest));
@@ -313,7 +327,7 @@ int main()
 
  writeReg(Motion_Burst, 0x00);
 
-  for(int i=0;i<100000;i++)
+  for(int i=0;i<100000&!shutdown;i++)
   {
     ReadMotion();
 
