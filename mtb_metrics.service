@@ -1,0 +1,13 @@
+[Unit]
+Description=MTB Suspension Metrics
+
+[Service]
+ExecStart=python /home/nick/mtb_metrics/button_caller
+WorkingDirectory=/home/nick/mtb_metrics
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=dani
+
+[Install]
+WantedBy=multi-user.target
