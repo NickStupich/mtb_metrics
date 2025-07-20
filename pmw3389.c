@@ -21,14 +21,14 @@
 
 int spi_fd;
 struct sigaction act;
-static char *spiDevice = "/dev/spidev0.1";
+static char *spiDevice = "/dev/spidev0.0";
 static uint8_t spiBPW = 8;
 static uint32_t spiSpeed = 2000000;
 
 FILE * outputFp = NULL;
 struct timeval initialTime;
 
-static int PIN_CS = 8;
+static int PIN_CS = 22;
 
 volatile int32_t x_pos = 0, y_pos = 0;
 int32_t readCount = 0;
@@ -197,7 +197,7 @@ uint8_t readReg(uint8_t reg)
 int32_t convTwosComp16(int32_t x)
 {
 	if(x & 0x8000){
-		x = -(x ^ 0xffff)+1;
+		x = -((x ^ 0xffff)+1);
 	}
 
 	return x;
@@ -305,6 +305,8 @@ int main(int argc, char* argv[])
 	  return -1;
   }
 
+  fprintf(outputFp, "t,x,y\n");
+
   struct sigaction sigact;
   sigact.sa_handler = intHandler;
   sigaction(SIGINT, &sigact, NULL);
@@ -327,7 +329,8 @@ int main(int argc, char* argv[])
 
  writeReg(Motion_Burst, 0x00);
 
-  for(int i=0;i<100000&!shutdown;i++)
+//  for(int i=0;i<100000&!shutdown;i++)
+for(int i=0;!shutdown;i++)
   {
     ReadMotion();
 
