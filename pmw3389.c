@@ -227,6 +227,10 @@ void ReadMotion()
   uint16_t yl = burstBuffer[4];
   uint16_t yh = burstBuffer[5];
 
+  uint8_t squal = burstBuffer[6];
+  uint8_t rawdataSum = burstBuffer[7];
+  uint8_t motion = burstBuffer[0];
+
   int32_t dx = convTwosComp16(xl | (xh << 8));
   int32_t dy = convTwosComp16(yl | (yh << 8));
 
@@ -239,7 +243,9 @@ void ReadMotion()
 	  struct timeval currentTime;
 	  gettimeofday(&currentTime, 0);
 	  uint64_t elapsed_us = (currentTime.tv_usec - initialTime.tv_usec) + 1000000L * ((uint64_t)(currentTime.tv_sec - initialTime.tv_sec));
-	  fprintf(outputFp, "%lld,%d,%d\n", elapsed_us, x_pos, y_pos);
+  
+	  //fprintf(outputFp, "%lld,%d,%d\n", elapsed_us, x_pos, y_pos);
+	  fprintf(outputFp, "%lld,%d,%d,%d,%x\n", elapsed_us, x_pos, y_pos, squal, motion);
   }
 
 }
@@ -289,9 +295,34 @@ int main(int argc, char* argv[])
     printf("Read[%x] = %x\n", regToRead[i], x);
   }
 
+
+  if(argc > 2 && strcmp(argv[1], "print") == 0)
+  {
+	  bool squal = 0;
+
+
+     if(strcmp(argv[2], "squal") == 0) {
+	     squal = 1;
+     } else {
+	     printf("print for '%s' not supported\n", argv[2]);
+	     return 1;
+     }
+
+     while(1) {
+	if(squal) {
+		uint8_t squal = readReg(SQUAL);
+		printf("%d\n", squal);
+	}
+
+	sleep(1);
+     }
+
+
+  }
+
   if(argc > 1)
   {
-	printf("writing to file: %s\n", argv[1]);
+	 printf("writing to file: %s\n", argv[1]);
 	outputFp = fopen(argv[1], "w");
   }
   else
@@ -305,7 +336,10 @@ int main(int argc, char* argv[])
 	  return -1;
   }
 
-  fprintf(outputFp, "t,x,y\n");
+
+  //fprintf(outputFp, "t,x,y\n");
+  fprintf(outputFp, "t,x,y,squal,motion\n");
+
 
   struct sigaction sigact;
   sigact.sa_handler = intHandler;
@@ -329,7 +363,6 @@ int main(int argc, char* argv[])
 
  writeReg(Motion_Burst, 0x00);
 
-//  for(int i=0;i<100000&!shutdown;i++)
 for(int i=0;!shutdown;i++)
   {
     ReadMotion();
