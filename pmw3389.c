@@ -14,19 +14,14 @@
 #include <signal.h>
 #include <stdbool.h>
 
-#include "constants.h"
+#include "pmw3389.h"
 #include "SROM.h"
 
-#define USE_MOTION_BURST_READ 1
-
 int spi_fd;
-struct sigaction act;
 static char *spiDevice = "/dev/spidev0.0";
 static uint8_t spiBPW = 8;
 static uint32_t spiSpeed = 2000000;
 
-FILE * outputFp = NULL;
-struct timeval initialTime;
 
 static int PIN_CS = 22;
 
@@ -203,8 +198,44 @@ int32_t convTwosComp16(int32_t x)
 	return x;
 }
 
-#if(USE_MOTION_BURST_READ)
-void ReadMotion()
+void PMW3389_Setup()
+{
+
+	  if(pmw_spiOpen(spiDevice)!= 0)
+  {
+	  printf("failed to open!\n");
+	  pmw_spiClose();
+	  return 1;
+  }
+
+  performStartup();
+
+  uint8_t regToRead[3] = {0x0, 0x01, 0x3f};
+  for(int i=0;i<3;i++){
+    uint8_t x = readReg(regToRead[i]);
+    printf("Read[%x] = %x\n", regToRead[i], x);
+  }
+
+
+  uint8_t regTest = 0x10;
+  printf("Read[%x] = %x\n", regTest, readReg(regTest));
+
+  writeReg(regTest, 0x42);
+  printf("Write[%x] = 0x42\n");
+
+  printf("Read[%x] = %x\n", regTest, readReg(regTest));
+
+  writeReg(regTest, 0x20);
+  printf("Write[%x] = 0x20\n");
+  printf("Read[%x] = %x\n", regTest, readReg(regTest));
+
+
+ writeReg(Motion_Burst, 0x00);
+
+ 
+}
+
+void ReadMotion(int *x, int *y, uint8_t *squal, uint8_t *motion)
 {
   gpioWrite(PIN_CS, 0);
 
@@ -227,9 +258,9 @@ void ReadMotion()
   uint16_t yl = burstBuffer[4];
   uint16_t yh = burstBuffer[5];
 
-  uint8_t squal = burstBuffer[6];
+  *squal = burstBuffer[6];
   uint8_t rawdataSum = burstBuffer[7];
-  uint8_t motion = burstBuffer[0];
+  *motion = burstBuffer[0];
 
   int32_t dx = convTwosComp16(xl | (xh << 8));
   int32_t dy = convTwosComp16(yl | (yh << 8));
@@ -238,155 +269,8 @@ void ReadMotion()
   y_pos += dy;
   readCount++;
 
-  if(outputFp != NULL)
-  {
-	  struct timeval currentTime;
-	  gettimeofday(&currentTime, 0);
-	  uint64_t elapsed_us = (currentTime.tv_usec - initialTime.tv_usec) + 1000000L * ((uint64_t)(currentTime.tv_sec - initialTime.tv_sec));
-  
-	  //fprintf(outputFp, "%lld,%d,%d\n", elapsed_us, x_pos, y_pos);
-	  fprintf(outputFp, "%lld,%d,%d,%d,%x\n", elapsed_us, x_pos, y_pos, squal, motion);
-  }
-
-}
-#else
-
-void ReadMotion()
-{
-  writeReg(Motion, 0x01);
-  readReg(Motion);
-
-  uint16_t xl = readReg(Delta_X_L);
-  uint16_t xh = readReg(Delta_X_H);
-  uint16_t yl = readReg(Delta_Y_L);
-  uint16_t yh = readReg(Delta_Y_H);
-
-  int32_t dx = convTwosComp16(xl | (xh << 8));
-  int32_t dy = convTwosComp16(yl | (yh << 8));
-
-  x_pos += dx;
-  y_pos += dy;
-
-  readCount++;
-}
-
-#endif
-
-void intHandler(int) {
-	printf("action handler\n");
-      	shutdown=true;
-}
-
-int main(int argc, char* argv[])
-{
-
-  if(pmw_spiOpen(spiDevice)!= 0)
-  {
-	  printf("failed to open!\n");
-	  pmw_spiClose();
-	  return 1;
-  }
-
-  performStartup();
-
-  uint8_t regToRead[3] = {0x0, 0x01, 0x3f};
-  for(int i=0;i<3;i++){
-    uint8_t x = readReg(regToRead[i]);
-    printf("Read[%x] = %x\n", regToRead[i], x);
-  }
+  *x = x_pos;
+  *y = y_pos;
 
 
-  if(argc > 2 && strcmp(argv[1], "print") == 0)
-  {
-	  bool squal = 0;
-
-
-     if(strcmp(argv[2], "squal") == 0) {
-	     squal = 1;
-     } else {
-	     printf("print for '%s' not supported\n", argv[2]);
-	     return 1;
-     }
-
-     while(1) {
-	if(squal) {
-		uint8_t squal = readReg(SQUAL);
-		printf("%d\n", squal);
-	}
-
-	sleep(1);
-     }
-
-
-  }
-
-  if(argc > 1)
-  {
-	 printf("writing to file: %s\n", argv[1]);
-	outputFp = fopen(argv[1], "w");
-  }
-  else
-  {
-	  printf("Using default output file\n");
-  	outputFp = fopen("/home/nick/accel_data/temp.csv", "w");
-  }
-  if(outputFp == NULL)
-  {
-	  printf("Failed to open output file\n");
-	  return -1;
-  }
-
-
-  //fprintf(outputFp, "t,x,y\n");
-  fprintf(outputFp, "t,x,y,squal,motion\n");
-
-
-  struct sigaction sigact;
-  sigact.sa_handler = intHandler;
-  sigaction(SIGINT, &sigact, NULL);
-  sigaction(SIGTERM, &sigact, NULL);
-
-  uint8_t regTest = 0x10;
-  printf("Read[%x] = %x\n", regTest, readReg(regTest));
-
-  writeReg(regTest, 0x42);
-  printf("Write[%x] = 0x42\n");
-
-  printf("Read[%x] = %x\n", regTest, readReg(regTest));
-
-  writeReg(regTest, 0x20);
-  printf("Write[%x] = 0x20\n");
-  printf("Read[%x] = %x\n", regTest, readReg(regTest));
-
- struct timeval currenttime;
- gettimeofday(&initialTime, 0);
-
- writeReg(Motion_Burst, 0x00);
-
-for(int i=0;!shutdown;i++)
-  {
-    ReadMotion();
-
-   if(i % 1000 == 0)
-		   {
-	printf("%d\t%d\n", x_pos, y_pos);
-    }
-   
-   if(i % 10000 == 0)
-   {
-	gettimeofday(&currenttime, 0);
-	int samplesPerSecond = (int)((i * 1000) / (1000 * (currenttime.tv_sec - initialTime.tv_sec) + (currenttime.tv_sec - initialTime.tv_sec) / 1000));
-	printf("SPS: %d\n", samplesPerSecond);
-
-   }
-
-  }
-
-  printf("before shutdown\n");
-  fclose(outputFp);
-  pmw_spiClose();
-  printf("\nshutdown\n");
-
-
-  return 0;
 }

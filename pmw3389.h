@@ -49,3 +49,7 @@
 #define Lift_Config 0x63
 #define Raw_Data_Burst  0x64
 #define LiftCutoff_Tune2  0x65
+
+void ReadMotion(int *x, int *y);
+
+void PMW3389_Setup(void);

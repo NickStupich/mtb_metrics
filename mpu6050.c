@@ -95,7 +95,7 @@ int setup_mpu6050(uint8_t addr) {
 }
 
 
-void gyroAccelRead(int fd) {
+void gyroAccelRead(int fd, imu_data_t* data) {
 
  //  int wiringPiI2CReadBlockData  (int fd, int reg, uint8_t *values, uint8_t size);
 
@@ -120,50 +120,18 @@ void gyroAccelRead(int fd) {
 
   float accel_scale = 16384;
   // setup range dependant scaling
-  float accX = ((float)rawAccX) / accel_scale;
-  float accY = ((float)rawAccY) / accel_scale;
-  float accZ = ((float)rawAccZ) / accel_scale;
+  data->accX = ((float)rawAccX) / accel_scale;
+  data->accY = ((float)rawAccY) / accel_scale;
+  data->accZ = ((float)rawAccZ) / accel_scale;
 
 
   float gyro_scale = 131;
-  float gyroX = ((float)rawGyroX) / gyro_scale;
-  float gyroY = ((float)rawGyroY) / gyro_scale;
-  float gyroZ = ((float)rawGyroZ) / gyro_scale;
+  data->gyroX = ((float)rawGyroX) / gyro_scale;
+  data->gyroY = ((float)rawGyroY) / gyro_scale;
+  data->gyroZ = ((float)rawGyroZ) / gyro_scale;
 
 
 
-  printf("%.2f\t%.2f\t%.2f\t\t%.2f\t%.2f\t%.2f\n", accX, accY, accZ, gyroX, gyroY, gyroZ);
   //printf("%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n", accX, accY, accZ, gyroX, gyroY, gyroZ);
-}
-
-int main()
-{
-   if(wiringPiSetup() == -1) {
-      printf("wiringPiSetup() failed\n");
-      return -1;
-   }
-
-   int fd, result;
-
-   // Initialize the interface by giving it an external device ID.
-   // The MCP4725 defaults to address 0x60.   
-   //
-   // It returns a standard file descriptor.
-   // 
-   fd = setup_mpu6050(0x68);
-
-   cout << "Init result: "<< fd << endl;
-
-   uint8_t time_before = millis();
-
-   for(int i = 0; i < 10000; i++)
-   {
-      gyroAccelRead(fd);
-      delay(1000);
-   }
-
-   printf("Elapsed millis: %d\n", millis() - time_before);
-
-   return 0;
 }
 
