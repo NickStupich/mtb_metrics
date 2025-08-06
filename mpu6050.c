@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <wiringPiI2C.h>
 #include <wiringPi.h>
+#include "mpu6050.h"
 
 using namespace std;
 
@@ -105,8 +106,8 @@ void gyroAccelRead(int fd, imu_data_t* data) {
 	   printf("ReadBlockData() failed\n");
    }
 
-  for(int i=0;i<14;i++) { printf("%02x\t", buffer[i]);}
-  printf("\n");
+  //for(int i=0;i<14;i++) { printf("%02x\t", buffer[i]);}
+  //printf("\n");
 
   int16_t rawAccX = buffer[0] << 8 | buffer[1];
   int16_t rawAccY = buffer[2] << 8 | buffer[3];

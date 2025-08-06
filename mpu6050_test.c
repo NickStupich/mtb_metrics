@@ -5,6 +5,7 @@
 
 #include "mpu6050.h"
 
+using namespace std;
 
 int main()
 {
@@ -34,7 +35,7 @@ int main()
 
       printf("%.2f\t%.2f\t%.2f\t\t%.2f\t%.2f\t%.2f\n", data.accX, data.accY, data.accZ, data.gyroX, data.gyroY, data.gyroZ);
 
-      delay(1000);
+      delay(100);
    }
 
    printf("Elapsed millis: %d\n", millis() - time_before);

@@ -1,5 +1,13 @@
-gcc pmw3389.c -O3 -o pmw3389 -lpigpio
+g++ pmw3389_test.c pmw3389.c -O3 -o pmw3389_test -lpigpio
 
 #get around pigpio's need for running as root
-sudo chown root:root pmw3389
-sudo chmod 4755 pmw3389
+sudo chown root:root pmw3389_test
+sudo chmod 4755 pmw3389_test
+
+
+g++ mpu6050_test.c mpu6050.c -O3 -o mpu6050_test -lwiringPi
+
+g++ mtb_metrics.c mpu6050.c pmw3389.c -O3 -o mtb_metrics -lpigpio -lwiringPi
+
+sudo chown root:root mtb_metrics
+sudo chmod 4755 mtb_metrics

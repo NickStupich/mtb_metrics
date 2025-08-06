@@ -17,36 +17,37 @@
 
 #include "pmw3389.h"
 
+void intHandler(int);
+bool shutdown=false;
+
 
 int main(int argc, char* argv[])
 {
   FILE * outputFp = NULL;
   struct timeval initialTime;
 
-  volatile int32_t x_pos=0, y_pos=0;
+  int32_t x_pos=0, y_pos=0;
 
   PMW3389_Setup();
 
   if(argc > 2 && strcmp(argv[1], "print") == 0)
   {
-	  bool squal = 0;
-
 
      if(strcmp(argv[2], "squal") == 0) {
-	     squal = 1;
+	while(1) {
+		int x, y;
+		uint8_t squal, motion;
+		ReadMotion(&x, &y, &squal, &motion);
+		printf("%d\n", squal);
+
+		sleep(1);
+	}
+
      } else {
 	     printf("print for '%s' not supported\n", argv[2]);
 	     return 1;
      }
-
-     while(1) {
-	if(squal) {
-		uint8_t squal = readReg(SQUAL);
-		printf("%d\n", squal);
-	}
-
-	sleep(1);
-     }
+     
 
 
   }
@@ -84,7 +85,8 @@ int main(int argc, char* argv[])
 
 for(int i=0;!shutdown;i++)
   {
-    ReadMotion(&x_pos, &y_pos);
+   uint8_t squal, motion;
+    ReadMotion(&x_pos, &y_pos, &squal, &motion);
 
   if(outputFp != NULL)
   {
@@ -114,7 +116,9 @@ for(int i=0;!shutdown;i++)
 
   printf("before shutdown\n");
   fclose(outputFp);
-  pmw_spiClose();
+
+  PMW3389_Shutdown();
+
   printf("\nshutdown\n");
 
 

@@ -18,7 +18,7 @@
 #include "SROM.h"
 
 int spi_fd;
-static char *spiDevice = "/dev/spidev0.0";
+char spiDevice[50] = "/dev/spidev0.0";
 static uint8_t spiBPW = 8;
 static uint32_t spiSpeed = 2000000;
 
@@ -27,7 +27,6 @@ static int PIN_CS = 22;
 
 volatile int32_t x_pos = 0, y_pos = 0;
 int32_t readCount = 0;
-bool shutdown=false;
 
 uint8_t readReg(uint8_t reg);
 void writeReg(uint8_t reg, uint8_t val);
@@ -198,14 +197,14 @@ int32_t convTwosComp16(int32_t x)
 	return x;
 }
 
-void PMW3389_Setup()
+int PMW3389_Setup()
 {
 
 	  if(pmw_spiOpen(spiDevice)!= 0)
   {
 	  printf("failed to open!\n");
 	  pmw_spiClose();
-	  return 1;
+	  return 0;
   }
 
   performStartup();
@@ -231,7 +230,7 @@ void PMW3389_Setup()
 
 
  writeReg(Motion_Burst, 0x00);
-
+ return 1;
  
 }
 
@@ -273,4 +272,11 @@ void ReadMotion(int *x, int *y, uint8_t *squal, uint8_t *motion)
   *y = y_pos;
 
 
+}
+
+
+void PMW3389_Shutdown(){
+
+	
+  pmw_spiClose();
 }

@@ -3,11 +3,11 @@
 #include <wiringPiI2C.h>
 #include <wiringPi.h>
 
-typedef struct {
+struct imu_data_t {
 	float accX, accY, accZ;
 	float gyroX, gyroY, gyroZ;
 
-} imu_data_t;
+} ;
 
 int setup_mpu6050(uint8_t addr);
 

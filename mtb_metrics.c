@@ -19,6 +19,8 @@
 #include "mpu6050.h"
 
 
+bool shutdown=false;
+void intHandler(int);
 
 
 int main(int argc, char* argv[])
@@ -64,8 +66,8 @@ int main(int argc, char* argv[])
  struct timeval currenttime;
  gettimeofday(&initialTime, 0);
 
-  volatile int32_t x_pos=0, y_pos=0;
-  volatile uint8_t squal=0, motion=0;
+  int32_t x_pos=0, y_pos=0;
+  uint8_t squal=0, motion=0;
 
   imu_data_t lower_imu, upper_imu;
 
@@ -84,7 +86,7 @@ for(int i=0;!shutdown;i++)
     //fprintf(outputFp, "%lld,%d,%d\n", elapsed_us, x_pos, y_pos);
     fprintf(outputFp, "%lld,%d,%d,%d,%x,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,\n", elapsed_us, x_pos, y_pos, squal, motion,
     		lower_imu.accX,lower_imu.accY,lower_imu.accZ,lower_imu.gyroX,lower_imu.gyroY,lower_imu.gyroZ,
-    		upper_imu.accX,upper_imu.accY,upper_imu.accZ,upper_imu.gyroX,upper_imu.gyroY,upper_imu.gyroZ);
+   		upper_imu.accX,upper_imu.accY,upper_imu.accZ,upper_imu.gyroX,upper_imu.gyroY,upper_imu.gyroZ);
   }
 
 
@@ -105,7 +107,7 @@ for(int i=0;!shutdown;i++)
 
   printf("before shutdown\n");
   fclose(outputFp);
-  pmw_spiClose();
+  PMW3389_Shutdown();
   printf("\nshutdown\n");
 
 

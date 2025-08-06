@@ -50,6 +50,8 @@
 #define Raw_Data_Burst  0x64
 #define LiftCutoff_Tune2  0x65
 
-void ReadMotion(int *x, int *y);
+void ReadMotion(int *x, int *y, uint8_t *squal, uint8_t *motion);
 
-void PMW3389_Setup(void);
+int PMW3389_Setup(void);
+
+void PMW3389_Shutdown(void);
